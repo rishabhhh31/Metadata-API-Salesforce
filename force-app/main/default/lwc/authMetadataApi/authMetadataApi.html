@@ -1,0 +1,132 @@
+<template>
+	<lightning-card title="Authorization using Metadata API">
+		<template if:false={loaded}>
+			<lightning-spinner alternative-text="Loading"></lightning-spinner>
+		</template>
+		<section>
+			<template if:true={showSourceTarget}>
+				<div class="slds-grid slds-gutters slds-m-around_medium">
+					<div class="slds-col slds-size_1-of-2 source-column" style="height: fit-content; margin: auto">
+						<lightning-combobox label="Source Org" value={selectedSource} options={sourceOptions}
+							onchange={handleSourceChange} required="true"></lightning-combobox>
+					</div>
+					<div class="slds-col slds-size_1-of-2 target-column">
+						<lightning-combobox label="Target Org" value={selectedTarget} options={targetOptions}
+							onchange={handleTargetChange} disabled={isTargetDisabled} required="true">
+						</lightning-combobox>
+					</div>
+				</div>
+				<lightning-button class="slds-m-left_large" label="Next" title="Next" onclick={handleNext1}
+					variant="brand" disabled={disablenext1}></lightning-button>
+			</template>
+		</section>
+		<section>
+			<template if:true={showMetadataTypes}>
+				<div class="slds-m-around_medium">
+					<lightning-dual-listbox label="Select Metadata Types" source-label="Available Types"
+						selected-label="Selected Types" options={metadataTypes} value={selectedMetadataTypes}
+						onchange={handleMetadataTypesChange}></lightning-dual-listbox>
+				</div>
+				<lightning-button class="slds-m-left_x-small slds-m-around_medium" label="Previous" variant="brand"
+					onclick={handlePrevious}></lightning-button>
+				<lightning-button class="slds-m-left_x-small slds-m-around_medium" label="Next" variant="brand"
+					onclick={handleNextForDatatable} disabled={disableDualPicklistNext}></lightning-button>
+			</template>
+		</section>
+		<section>
+			<template if:true={showDataTable}>
+				<lightning-card>
+					<div class="slds-grid slds-wrap slds-align_absolute-center slds-m-around_medium">
+						<lightning-button-group class="slds-m-right_small">
+							<lightning-button class="all-item-button" variant="brand-outline" label="All Items"
+								title="Primary action with lighter look" onclick={handleAllItems}></lightning-button>
+							<lightning-button class="new-item-button" variant="brand-outline" label="New Items"
+								title="Primary action with lighter look" onclick={handleNewItems}></lightning-button>
+							<lightning-button class="changed-button" variant="brand-outline" label="Common Items"
+								title="Primary action with lighter look" onclick={handleCommonItems}></lightning-button>
+							<lightning-button class="deleted-button" variant="brand-outline" label="Deleted Items"
+								title="Primary action with lighter look" onclick={handleDeletedItems}>
+							</lightning-button>
+						</lightning-button-group>
+						<lightning-input class="slds-m-bottom_small slds-badge__icon" type="Search" placeholder="Filter"
+							onchange={handleSearchChange}></lightning-input>
+					</div>
+					<div style="height: 200px" class="slds-m-around_medium">
+						<lightning-datatable key-field="Id" data={filteredMetadataDetails} columns={columns}
+							onrowselection={handleCheckboxSelection} selected-rows={selectedRows}></lightning-datatable>
+					</div>
+				</lightning-card>
+				<div class="slds-m-around_medium">
+					<lightning-button class="slds-m-left_x-small" label="Previous" variant="brand"
+						onclick={handlePreviousDatatable}></lightning-button>
+					<lightning-button class="slds-m-left_x-small" label="Validate" variant="brand"
+						title="Validate Apex Class" onclick={handleValidateClick} disabled={disableValidate}>
+					</lightning-button>
+					<lightning-button-menu style="margin-bottom:3px" onclick={validateOptionHandle}
+						alternative-text="Show menu" disabled={disablebuttonmenu}>
+						<lightning-menu-item value="NoTestRun" label="No Test Run"></lightning-menu-item>
+						<lightning-menu-item value="RunSpecifiedTests" label="Run Specified Tests">
+						</lightning-menu-item>
+						<lightning-menu-item value="RunLocalTests" label="Run Local Tests"></lightning-menu-item>
+					</lightning-button-menu>
+					<lightning-button class="slds-m-left_x-small" label="Deploy" variant="brand"
+						title="Deploy Validate items" onclick={handleDeployClick} disabled={disableDeploy}>
+					</lightning-button>
+
+					<lightning-button icon-name="utility:download" class="slds-m-left_x-small" label="Download"
+						variant="brand" onclick={handleDownload} disabled={disableDownload}></lightning-button>
+					<lightning-button if:true={isCommonSelected} disabled={showCompareButton}
+						class="slds-m-left_x-small" label="Compare" variant="brand" onclick={handleCompare}>
+					</lightning-button>
+				</div>
+			</template>
+		</section>
+		<!-- modalPopup.html -->
+	</lightning-card>
+	<section>
+		<template if:true={isModalOpen}>
+			<section role="dialog" tabindex="-1" aria-modal="true" aria-labelledby="modal-heading-01"
+				class="slds-modal slds-fade-in-open">
+				<div class="slds-modal__container">
+					<span class="slds-assistive-text">Cancel and close</span>
+					<div class="slds-modal__header">
+						<h1 id="modal-heading-01" class="slds-modal__title slds-hyphenate">Select Specific Test</h1>
+					</div>
+					<div class="slds-modal__content " id="modal-content-id-1">
+						<div style="height: 200px" class="slds-m-around_medium">
+							<lightning-datatable data={testClassData} columns={columns}
+								onrowselection={handleTestClassModal} key-field="id">
+							</lightning-datatable>
+						</div>
+					</div>
+					<div class="slds-modal__footer slds-modal__footer_directional">
+						<button class="slds-button slds-button_neutral" onclick={Closemodal}>Skip This Step</button>
+						<button class="slds-button slds-button_brand" onclick={Closemodal}>Save &amp; Next</button>
+					</div>
+				</div>
+			</section>
+			<div class="slds-backdrop slds-backdrop_open" role="presentation"></div>
+		</template>
+	</section>
+	<section>
+		<template if:true={showTextArea}>
+			<lightning-textarea readonly value={errorData} class="custom-textarea"></lightning-textarea>
+
+			<lightning-button class="slds-m-left_x-small" label="Hide" variant="brand" onclick={handlehideStatus}>
+			</lightning-button>
+		</template>
+	</section>
+	<section>
+		<template if:true={showCompareCard}>
+			<div class="slds-grid slds-wrap">
+				<div class="slds-col slds-size_1-of-1 height ">
+					<iframe src={url} height="100%" width="100%"></iframe>
+					<div class="slds-box slds-theme_shade">
+						<lightning-button class="slds-m-left_x-small " label="Hide Comparison" variant="brand"
+							onclick={handlePreviousCompare}></lightning-button>
+					</div>
+				</div>
+			</div>
+		</template>
+	</section>
+</template>

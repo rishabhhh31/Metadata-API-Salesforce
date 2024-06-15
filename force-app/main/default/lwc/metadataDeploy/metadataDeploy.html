@@ -1,0 +1,18 @@
+<template>
+	<lightning-card title="Metadata Deploy">
+		<lightning-messages></lightning-messages>
+		<template if:true={asyncResult}>
+			
+		</template>
+		<template if:true={isNullAsyncResult}>
+			<c-zip-component name="generateZip" oncomplete={deployZip} rendered={isNullAsyncResult}>
+				<c-zip-entry path="package.xml" data={packageXml}></c-zip-entry>
+				<c-zip-entry path="classes/HelloWorld.cls-meta.xml" data={helloWorldMetadata}></c-zip-entry>
+				<c-zip-entry path="classes/HelloWorld.cls" data={helloWorld}></c-zip-entry>
+			</c-zip-component>
+			
+				<lightning-button label="Deploy" onclick={generateZip} variant="brand"></lightning-button>
+			
+		</template>
+	</lightning-card>
+</template>

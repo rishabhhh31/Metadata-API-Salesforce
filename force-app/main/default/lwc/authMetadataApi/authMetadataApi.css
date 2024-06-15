@@ -1,0 +1,25 @@
+.custom-textarea {
+    width: 100%;
+    font-size: 16px;
+    color: rgb(252, 111, 111);
+    white-space: pre-line;
+    --sds-c-textarea-sizing-min-height:150px;
+}
+
+.custom-comparison1{
+    --sds-c-textarea-sizing-min-height:200px;
+}
+.custom-comparison2{
+    --sds-c-textarea-sizing-min-height:200px;
+}
+.lgc-bg {
+    background-color: #0176D3;
+    color:  #ffffff;
+    
+}
+.height{
+    height: 80vh;
+}
+/* .CompareCard{
+    width: 40%;
+} */
