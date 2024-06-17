@@ -18,7 +18,11 @@ global class remoteSite implements Schedulable, Database.stateful {
                 string url = Domain;
                 List<String> parts = url.split('//');
                 String name = parts[1].replaceAll('[^\\w\\s]', '');
-                remoteSiteSettings.fullName = name;
+                if(name.length()>40){
+                    remoteSiteSettings.fullName = name.substring(0,39);
+                }else{
+                    remoteSiteSettings.fullName = name;
+                }
                 remoteSiteSettings.url = Domain;
                 remoteSiteSettings.description = 'Remote site settings created from apex';
                 remoteSiteSettings.isActive = true;
@@ -34,6 +38,7 @@ global class remoteSite implements Schedulable, Database.stateful {
                 //Success
                 system.debug('Success - ' + sr);                
             }else{
+                System.debug(sr.errors);
                 //Failed
                 system.debug('Failed - ');
                 throw new AuthorizationException('Failed to Create Remote Site Settings');

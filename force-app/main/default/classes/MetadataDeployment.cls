@@ -31,7 +31,6 @@ public class MetadataDeployment {
     }
     @AuraEnabled
     public static String getmetadatazips(String sourceOrg, String targetOrg,  String metadataItemNames) {
-        System.debug('metadataItemNames'+ metadataItemNames);
         List<MetadataItemWrapper> listMetadataItems=(List<MetadataItemWrapper>)JSON.deserialize(metadataItemNames,List<MetadataItemWrapper>.class);
         List<String> base64Zips = new List<String>();
         try {
@@ -76,9 +75,7 @@ public class MetadataDeployment {
                 packageTypeMembers.members = new List<String>();
                 packageTypeMembers.members.addAll(metadataItemName.fullname);
                 packageTypeMembersList.add(packageTypeMembers);
-            }
-            System.debug('packageTypeMembersList'+packageTypeMembersList);
-            
+            }            
             retrieveRequest.unpackaged.types = packageTypeMembersList;
             MetadataService.AsyncResult asyncResult = service.retrieve(retrieveRequest);
             MetadataService.RetrieveResult retrieveResult;
@@ -115,8 +112,6 @@ public class MetadataDeployment {
             deployOptions.testLevel = 'RunLocalTests';
         }else if (TypeofValidation.equals('RunSpecifiedTests')) {
             deployOptions.testLevel = 'RunSpecifiedTests';
-            System.debug('testClassesToRun'+testClassesToRun);
-            // deployOptions.runTests = testClassesToRun;
             deployOptions.runTests = testClassesToRun;
         }
         
@@ -141,7 +136,6 @@ public class MetadataDeployment {
     public static String checkDeploymentStatus(String deploymentId, String targetOrg) {
         MetadataService.MetadataPort service = createService('target', targetOrg);
         MetadataService.DeployResult deployResult = service.checkDeployStatus(deploymentId, true);
-        System.debug('deploymentId ' + JSON.serialize(deployResult));
         String statusMessage = JSON.serialize(deployResult);
         return statusMessage;
     }

@@ -62,6 +62,15 @@ export default class AuthMetadataApi extends LightningElement {
 	testClassData = [];
 	fullNames = [];
 
+	connectedCallback() {
+		loadScript(this, JSZIP)
+			.then(() => {
+			})
+			.catch(error => {
+				console.error('Error loading JSZip:', error);
+			});
+	}
+
 	RecordPicklistValues(records) {
 		return records.map((record) => {
 			return {
@@ -75,7 +84,6 @@ export default class AuthMetadataApi extends LightningElement {
 	authorizedRecords({ error, data }) {
 		if (data) {
 			this.sourceOptions = this.RecordPicklistValues(data);
-			this.targetOptions = this.RecordPicklistValues(data);
 			this.showSourceTarget = true;
 		} else if (error) {
 			console.error("Error records:", error);
@@ -91,7 +99,7 @@ export default class AuthMetadataApi extends LightningElement {
 
 	handleTargetChange(event) {
 		this.selectedTarget = event.detail.value;
-		if (this.selectedSource || this.selectedTarget) {
+		if (this.selectedSource && this.selectedTarget) {
 			this.disablenext1 = false;
 		} else {
 			this.disablenext1 = true;
@@ -103,6 +111,7 @@ export default class AuthMetadataApi extends LightningElement {
 			(option) => option.value !== this.selectedSource
 		);
 	}
+
 	async orgMetadataTypes() {
 		let data = await getMetadataTypes({ sourceOrgId: this.selectedSource, targetOrgId: this.selectedTarget })
 		this.metadataTypes = data.map((metadataType) => {
@@ -115,6 +124,7 @@ export default class AuthMetadataApi extends LightningElement {
 		this.showMetadataTypes = true;
 		this.loaded = true;
 	}
+
 	handleNext1() {
 		this.loaded = false;
 		this.orgMetadataTypes();
@@ -124,6 +134,7 @@ export default class AuthMetadataApi extends LightningElement {
 		this.showSourceTarget = true;
 		this.showMetadataTypes = false;
 	}
+
 	async retrieveSelectedMetadata() {
 		let result = await getSelectedMetadataItemsForOrgs({ selectedTypes: this.selectedMetadataTypes, isSourceOrg: true, sourceOrgId: this.selectedSource, targetOrgId: this.selectedTarget });
 		let count = 0;
@@ -150,7 +161,7 @@ export default class AuthMetadataApi extends LightningElement {
 		this.filteredMetadataDetails = this.filteredMetadataDetails.filter(item => !item.fullName.toLowerCase().includes('test'));
 		this.copiedMetadata = [...this.filteredMetadataDetails];
 
-		const commonMetadataItems = this.metadataDetails.source.filter((sourceItem) =>
+		let commonMetadataItems = this.metadataDetails.source.filter((sourceItem) =>
 			this.metadataDetails.target.some(
 				(targetItem) => targetItem.fullName === sourceItem.fullName
 			)
@@ -167,11 +178,11 @@ export default class AuthMetadataApi extends LightningElement {
 		this.showMetadataTypes = false;
 		this.showDataTable = true;
 	}
+
 	handleNextForDatatable() {
 		this.loaded = false;
 		this.retrieveSelectedMetadata();
 	}
-
 
 	handleAllItems() {
 		this.selectedRows = [];
@@ -223,12 +234,8 @@ export default class AuthMetadataApi extends LightningElement {
 
 	handleMetadataTypesChange(event) {
 		this.selectedMetadataTypes = event.detail.value;
-		let Countselectedmetadatatype = event.detail.value.length;
-		if (Countselectedmetadatatype) {
-			this.disableDualPicklistNext = false;
-		} else {
-			this.disableDualPicklistNext = true;
-		}
+		let countSelectedMetadataType = event.detail.value.length;
+		this.disableDualPicklistNext = !(countSelectedMetadataType > 0);
 	}
 
 	showToastMessage(title, message, variant) {
@@ -239,6 +246,7 @@ export default class AuthMetadataApi extends LightningElement {
 		});
 		this.dispatchEvent(toastEvent);
 	}
+
 	keepOnlyLastObject(jsonArray) {
 		if (jsonArray.length > 0 && this.selectedRows.length > 0) {
 			const selectedId = this.selectedRows[0];
@@ -247,20 +255,18 @@ export default class AuthMetadataApi extends LightningElement {
 			return jsonArray[0];
 		}
 	}
+
 	handleCheckboxSelection(event) {
-		console.log(JSON.stringify(event.detail.selectedRows))
-		let countcheckboxselection = event.detail.selectedRows.length;
-		if (countcheckboxselection > 0 && this.isCommonSelected) {
+		let countCheckboxSelection = event.detail.selectedRows.length;
+		if (countCheckboxSelection > 0 && this.isCommonSelected) {
 			let lastSelection = this.keepOnlyLastObject(event.detail.selectedRows)
 			this.selectedRows = [lastSelection.Id];
 			this.showCompareButton = false;
 		} else {
 			this.showCompareButton = true;
 		}
-		this.selectedItems = event.detail.selectedRows.map((row) => {
-			return { ...row }
-		});
-		if (countcheckboxselection) {
+		this.selectedItems = [...event.detail.selectedRows];
+		if (countCheckboxSelection > 0) {
 			this.disableValidate = false;
 			this.disablebuttonmenu = false;
 			this.disableDownload = false;
@@ -270,6 +276,7 @@ export default class AuthMetadataApi extends LightningElement {
 			this.disableDownload = true;
 		}
 	}
+
 	handleSearchChange(event) {
 		this.filteredMetadataDetails = [...this.copiedMetadata];
 		this.loaded = false;
@@ -282,35 +289,29 @@ export default class AuthMetadataApi extends LightningElement {
 	}
 
 	handleValidateClick() {
-		console.log(this.TypeofValidation)
 		this.loaded = false;
-		if (this.TypeofValidation == null) {
+		if (!this.TypeofValidation) {
 			this.TypeofValidation = 'NoTestRun';
 		}
 		if (!this.selectedItems || this.selectedItems.length === 0) {
 			this.showToastMessage("No metadata items selected", "warning");
 			return;
 		}
-		const resultMap = {};
+		const resultMap = new Map();
 		this.selectedItems.forEach(item => {
-			const { metaDataType, fullName } = item;
-			if (!resultMap[metaDataType]) {
-				resultMap[metaDataType] = { type: metaDataType, fullName: [fullName] };
-			} else {
-				resultMap[metaDataType].fullName.push(fullName);
+			if (!resultMap.has(item.metaDataType)) {
+				resultMap.set(item.metaDataType, new Set());
 			}
-		});
-		console.log('resultMap', JSON.stringify(resultMap));
-		const resultArray = Object.values(resultMap).map(obj => ({ type: obj.type, fullName: obj.fullName }));
-		console.log('resultArray', JSON.stringify(resultArray));
-		resultArray.forEach(obj => {
-			if (obj.type === "ApexClass") {
-				obj.fullName = [...obj.fullName, ...this.fullNames];
-			} else {
-				obj.fullName = [...obj.fullName];
+			resultMap.get(item.metaDataType).add(item.fullName);
+		})
+		let resultArray = [];
+		for (let key of resultMap.keys()) {
+			let obj = { type: key, fullName: [...resultMap.get(key)] };
+			if (key === 'ApexClass') {
+				obj.fullName = [...resultMap.get(key), ...this.fullNames];
 			}
-		});
-		console.log('resultArray', JSON.stringify(resultArray));
+			resultArray = [...resultArray, obj];
+		}
 		deployMetadataItems({
 			sourceOrg: this.selectedSource,
 			targetOrg: this.selectedTarget,
@@ -320,7 +321,6 @@ export default class AuthMetadataApi extends LightningElement {
 		})
 			.then((result) => {
 				this.ValidationId = result;
-				console.log('ValidationId', this.ValidationId);
 				this.checkDeploy(this.ValidationId);
 				this.errorData = result;
 			})
@@ -336,7 +336,7 @@ export default class AuthMetadataApi extends LightningElement {
 	async handleDeployClick() {
 		let statusDeploy = await recentDeployment({ targetOrg: this.selectedTarget, valId: this.ValidationId })
 		if (statusDeploy) {
-			this.showToastMessage("Deployment Completed", "Deployed Successfully 🤓", "success");
+			this.showToastMessage("Deployment Completed", "Deployed Successfully 😊", "success");
 		}
 	}
 	async checkDeploy(valId) {
@@ -344,7 +344,6 @@ export default class AuthMetadataApi extends LightningElement {
 		while (!isDone) {
 			let data = await this.delay(valId, 3000);
 			let deployResult = JSON.parse(data);
-			console.log('deployResult', JSON.stringify(deployResult));
 			if (deployResult.status == 'Succeeded' || deployResult.status == 'Failed') {
 				if (deployResult.status == 'Succeeded') {
 					this.showToastMessage("Done", "Validation Done Successfully", "success");
@@ -372,7 +371,6 @@ export default class AuthMetadataApi extends LightningElement {
 			try {
 				let data = await checkDeploymentStatus({ deploymentId: valId, targetOrg: this.selectedTarget });
 				data = JSON.parse(data);
-
 				if (data.success === false) {
 					let errorData = [];
 					if (data.componentFailures && data.componentFailures.length > 0) {
@@ -423,8 +421,6 @@ export default class AuthMetadataApi extends LightningElement {
 		});
 	}
 
-
-
 	handleDownload() {
 		this.loaded = false;
 		if (!this.selectedItems || this.selectedItems.length === 0) {
@@ -441,23 +437,19 @@ export default class AuthMetadataApi extends LightningElement {
 			sourceAndTargetData.target = targetData;
 		}
 		for (let key of Object.keys(sourceAndTargetData)) {
-			const resultMap = {};
-			sourceAndTargetData[key].forEach(item => {
-				const { metaDataType, fullName } = item;
-				if (!resultMap[metaDataType]) {
-					resultMap[metaDataType] = { type: metaDataType, fullName: [fullName] };
-				} else {
-					resultMap[metaDataType].fullName.push(fullName);
+			let resultMap = new Map();
+			sourceAndTargetData[key].forEach(obj => {
+				if (!resultMap.has(obj.metaDataType)) {
+					resultMap.set(obj.metaDataType, new Set());
 				}
-			});
-			const resultArray = Object.values(resultMap).map(obj => ({ type: obj.type, fullName: obj.fullName }));
-			let orgId;
-			if (key == 'source') {
-				orgId = this.selectedSource;
+				resultMap.get(obj.metaDataType).add(obj.fullName);
+			})
+			let resultArray = [];
+			for (let k of resultMap.keys()) {
+				let obj = { type: k, fullName: [...resultMap.get(k)] };
+				resultArray = [...resultArray, obj];
 			}
-			else if (key == 'target') {
-				orgId = this.selectedTarget;
-			}
+			let orgId = key == 'source' ? this.selectedSource : this.selectedTarget;
 			getmetadatazips({
 				sourceOrg: orgId,
 				targetOrg: this.selectedTarget,
@@ -567,14 +559,7 @@ export default class AuthMetadataApi extends LightningElement {
 			console.error('Error loading ZIP:', error);
 		}
 	}
-	connectedCallback() {
-		loadScript(this, JSZIP)
-			.then(() => {
-			})
-			.catch(error => {
-				console.error('Error loading JSZip:', error);
-			});
-	}
+
 
 	validateOptionHandle(event) {
 		this.TypeofValidation = event.target.value;
@@ -587,8 +572,8 @@ export default class AuthMetadataApi extends LightningElement {
 	}
 
 	handleTestClassModal(event) {
-		let countTestCLassSelection = event.detail.selectedRows;
-		this.fullNames = countTestCLassSelection.map(item => item.fullName);
+		let countTestClassSelection = event.detail.selectedRows;
+		this.fullNames = countTestClassSelection.map(item => item.fullName);
 	}
 
 	Closemodal() {

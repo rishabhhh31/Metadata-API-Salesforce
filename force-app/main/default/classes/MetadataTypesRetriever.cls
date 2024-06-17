@@ -99,7 +99,7 @@ public class MetadataTypesRetriever {
                         metadataItems.add( new MetadataItemWrapper(fileProperty.fullName, EncodingUtil.urlDecode(fileProperty.fullName, 'UTF-8'),fileProperty.type_x,fileProperty.lastModifiedDate
                                                                   ));
                     }
-                }
+                } 
             }   else {
                 System.debug('No records found for the provided org Id');
             }

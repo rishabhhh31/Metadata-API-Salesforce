@@ -29,8 +29,8 @@ export default class InitAuthrization extends LightningElement {
                     this.loaded = false;
                     window.open(res, '_blank');
                     console.log('IN SET TIMEOUT');
-                }, 5000);
-                // this.loaded = false;             
+                }, 3000);
+                // this.loaded = false;                
             }).catch((err) => {
                 console.error('error', JSON.stringify(err));
             });

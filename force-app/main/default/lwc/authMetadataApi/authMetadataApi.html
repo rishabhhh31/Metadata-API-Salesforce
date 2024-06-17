@@ -95,7 +95,7 @@
 					<div class="slds-modal__content " id="modal-content-id-1">
 						<div style="height: 200px" class="slds-m-around_medium">
 							<lightning-datatable data={testClassData} columns={columns}
-								onrowselection={handleTestClassModal} key-field="id">
+								onrowselection={handleTestClassModal} key-field="Id">
 							</lightning-datatable>
 						</div>
 					</div>
@@ -111,7 +111,6 @@
 	<section>
 		<template if:true={showTextArea}>
 			<lightning-textarea readonly value={errorData} class="custom-textarea"></lightning-textarea>
-
 			<lightning-button class="slds-m-left_x-small" label="Hide" variant="brand" onclick={handlehideStatus}>
 			</lightning-button>
 		</template>
